@@ -10,6 +10,7 @@ This is a code challenge project. It demonstrates the use of the following:
 - AJAX Calls
 
 # See it in action (AppHarbor)
+https://twitterapitest.apphb.com
 
 # How to run locally
 Set the Database connection string and the Twitter-related configuration values
