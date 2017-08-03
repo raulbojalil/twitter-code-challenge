@@ -14,3 +14,8 @@ This is a code challenge project. It demonstrates the use of the following:
 # How to run locally
 Set the Database connection string and the Twitter-related configuration values
 in the web.config file.
+
+![screenshot](https://raw.githubusercontent.com/raulbojalil/twitter-code-challenge/master/screenshot1.png "screenshot")
+![screenshot](https://raw.githubusercontent.com/raulbojalil/twitter-code-challenge/master/screenshot2.png "screenshot")
+![screenshot](https://raw.githubusercontent.com/raulbojalil/twitter-code-challenge/master/screenshot3.png "screenshot")
+![screenshot](https://raw.githubusercontent.com/raulbojalil/twitter-code-challenge/master/screenshot4.png "screenshot")
