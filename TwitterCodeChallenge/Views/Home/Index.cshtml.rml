@@ -1,0 +1,228 @@
+﻿title User Home Page
+description Code Challenge
+author Raúl Bojalil
+
+body [ng-app="myApp" id="appCtrl" ng-controller="appCtrl"]
+
+region Scripts y estilos
+    script ~/Scripts/jquery.min.js
+    script ~/Scripts/bootstrap.min.js
+    style ~/Scripts/bootstrap.min.css
+    script ~/Scripts/angular.min.js
+    style ~/Scripts/bootstrap-datetimepicker.css
+    script ~/Scripts/moment-with-locales.js
+    script ~/Scripts/bootstrap-datetimepicker.js
+    
+    script [location="head"]
+        var app = angular.module('myApp',[]);
+        var callAngularFunction = function(element, functionName, params)
+        {
+            angular.element(element).scope()[functionName](params);
+            angular.element(element).scope().$apply();
+        }
+        var TWITTER_AVAILABLE = @(ViewBag.TwitterAvailable ? "true" : "false");
+        var TWITTER_LOGIN_URL = '@Url.Action("TwitterLogin", "Account")';
+        var TWITTER_SCREEN_NAME = '@(ViewBag.TwitterScreenName)';
+        var TWITTER_AUTH_HEADER = '@(ViewBag.TwitterAuthorization)';
+        
+script Angular Controller
+
+    app.controller("appCtrl", ['$scope', '$timeout', '$http', function($scope, $timeout, $http) {
+    
+        if(TWITTER_AUTH_HEADER)
+            $http.defaults.headers.common['X-TWITTERAUTH'] = TWITTER_AUTH_HEADER;
+    
+        $scope.twitterAvailable = TWITTER_AVAILABLE;
+        $scope.twitterScreenName = TWITTER_SCREEN_NAME;
+        
+        $scope.myTweetsError = "";
+        $scope.myTweets = [];
+
+        $scope.loadMyTweets = function(){
+        
+            $scope.myTweetsError = "";
+            $scope.loadingMyTweets = true;
+            $http({
+                url: "/api/tweets",
+                method: "GET",
+            })
+            .then(function(response) {
+                   
+                $scope.loadingMyTweets = false;
+                $scope.myTweets = response.data;
+                
+            }, 
+            function(response) { // optional
+               
+                $scope.loadingMyTweets = false;
+                $scope.myTweetsError = "An error has ocurred please try again later";
+                
+            });
+        };
+        
+        $scope.loadMyTweets();
+        
+        
+        $scope.placeTweetsError = "";
+        $scope.placeTweets = [];
+
+        $scope.loadPlaceTweets = function(placeId){
+        
+            $scope.placeTweetsError = "";
+            $scope.loadingPlaceTweets = true;
+            $http({
+                url: "/api/tweets?place=" + placeId,
+                method: "GET",
+            })
+            .then(function(response) {
+                   
+                $scope.loadingPlaceTweets = false;
+                $scope.placeTweets = response.data.statuses;
+                
+            }, 
+            function(response) { // optional
+               
+                $scope.loadingPlaceTweets = false;
+                $scope.placeTweetsError = "An error has ocurred please try again later";
+                
+            });
+        };
+        
+        
+        $scope.userHsTweets = [];
+        $scope.userHsTweetsError = "";
+        
+        $scope.loadUserHSTweets = function(twitterUser, twitterHS){
+        
+            $scope.userHsTweetsError = "";
+            $scope.loadingUserHSTweets = true;
+            $http({
+                url: "/api/tweets?user=" + twitterUser + "&hashtag=" + twitterHS,
+                method: "GET",
+            })
+            .then(function(response) {
+                   
+                $scope.loadingUserHSTweets = false;
+                $scope.userHsTweets = response.data.statuses;
+                
+            }, 
+            function(response) { // optional
+               
+                $scope.loadingUserHSTweets = false;
+                $scope.userHsTweetsError = "An error has ocurred please try again later";
+                
+            });
+        };
+        
+        $scope.tweet = function(msg){
+        
+            if(!msg) return;            
+            
+            $scope.loadingUserHSTweets = true;
+            $http({
+                url: "/api/tweets?status=" + msg,
+                method: "POST",
+            })
+            .then(function(response) {
+                   
+                $scope.loadMyTweets();
+                $scope.newTwitterMsg = "";
+                
+                
+            }, 
+            function(response) { // optional
+               
+                
+                alert("An error ocurred while adding your new tweet, please try again later");
+                
+            });
+        };
+        
+        
+    }]);
+
+
+form [action="@Url.Action("LogOff", "Account")" id="logoutForm" method="post"]
+    #@Html.AntiForgeryToken()
+
+navbar [style="margin-bottom: 0px"] User Home Page
+    submenu icon user <span id="username">@ViewBag.Username</span>
+    
+        tab [href="javascript:document.getElementById('logoutForm').submit()"] icon log-out Sign Out
+        
+
+fluid [style="margin-top: 69px"]
+    row [ng-show="twitterAvailable"]
+   
+        col 12
+            panel primary
+                pheading
+                    ptitle My Top 10 Tweets ({{ twitterScreenName }})
+                pbody
+                
+                    text [ng-model="newTwitterMsg" data-placeholder="What's happening?"] 
+                    button [ng-disabled="!newTwitterMsg" class="btn btn-info btn-block" ng-click="tweet(newTwitterMsg)"] Tweet
+                    br
+                    br
+                    
+                    alert [ng-show="loadingMyTweets"] info
+                        # Loading tweets, please wait...
+                    alert [ng-show="myTweetsError"] danger 
+                        #{{ myTweetsError }}
+                    alert [ng-show="!loadingMyTweets" ng-repeat="tweet in myTweets"] info 
+                        #{{ tweet.text }}
+                    alert [ng-show="!loadingMyTweets && myTweets.length == 0 && !myTweetsError"] warning 
+                        # No tweets to show
+                    
+        col 12
+            panel primary
+                pheading
+                    ptitle Top Tweets by Place
+                pbody
+                    text [ng-model="twitterPlaceId" data-placeholder="The ID of a twitter place, for example: 5a110d312052166f"] Place Id 
+                    button [class="btn btn-success btn-block" ng-click="loadPlaceTweets(twitterPlaceId)"] Search
+                    br
+                    br
+                    
+                    alert [ng-show="loadingPlaceTweets"] info
+                        # Loading tweets, please wait...
+                    alert [ng-show="placeTweetsError"] danger 
+                        #{{ placeTweetsError }}
+                    alert [ng-show="!loadingPlaceTweets" ng-repeat="tweet in placeTweets"] info 
+                        #{{ tweet.text }}
+                    alert [ng-show="!loadingPlaceTweets && placeTweets.length == 0 && !placeTweetsError"] warning 
+                        # No tweets to show
+                    
+                    
+        col 12
+            panel primary
+                pheading
+                    ptitle Top Tweets by User and Hashtag
+                pbody
+                    text [ng-model="twitterUser" data-placeholder="The Twitter username, for example: realDonaldTrump"] User
+                    text [ng-model="twitterHS" data-placeholder="The hashtag without the '#', for example: FlashbackFriday"] Hashtag
+                    button [class="btn btn-success btn-block" ng-click="loadUserHSTweets(twitterUser, twitterHS)"] Search
+                    
+                    br
+                    br
+                    
+                    alert [ng-show="loadingUserHSTweets"] info
+                        # Loading tweets, please wait...
+                    alert [ng-show="userHsTweetsError"] danger 
+                        #{{ userHsTweetsError }}
+                    alert [ng-show="!loadingUserHSTweets" ng-repeat="tweet in userHsTweets"] info 
+                        #{{ tweet.text }}
+                    alert [ng-show="!loadingUserHSTweets && userHsTweets.length == 0 && !userHsTweetsError"] warning 
+                        # No tweets to show
+                    
+    
+    row [ng-show="!twitterAvailable"]
+        col 12
+            button [class="btn btn-success btn-block" onclick="window.location = TWITTER_LOGIN_URL;"] Associate Twitter Account
+        
+        
+        
+
+
+    
+   
