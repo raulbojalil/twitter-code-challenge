@@ -55,6 +55,21 @@ namespace TwitterCodeChallenge.Controllers
             }
         }
 
+        public ActionResult DeleteUser(string id)
+        {
+            using (var db = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
+            {
+                db.Execute("DELETE FROM AspNetUsers WHERE Id = @id",
+                    new
+                    {
+                        id = id
+                    });
+            }
+
+            return RedirectToAction("UserManagement", "Account");
+
+        }
+
         [AllowAnonymous]
         public ActionResult TwitterLogin()
         {
@@ -99,9 +114,16 @@ namespace TwitterCodeChallenge.Controllers
         {
             ViewBag.SuccessMessage = TempData["SuccessMessage"];
 
+          
             var user = (ClaimsIdentity)User.Identity;
             if (!user.HasClaim("Role", "Admin"))
                 return RedirectToAction("Index");
+
+            //Using Dapper to select the Regular users
+            using (var db = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString))
+            {
+                ViewBag.RegularUsers = db.Query<ApplicationUser>("SELECT * FROM AspNetUsers WHERE Role = 'User'").ToList();
+            }
 
             return View();
         }
